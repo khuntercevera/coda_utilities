@@ -70,3 +70,15 @@ oligo_df_plus.csO6=temp2[:,6]
 
 #and save as .jld2 for future:
 @save "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_df_zero_plus.jld2" oligo_df_plus
+
+
+## Example in paper:
+
+C=[6 3 9 15 3 24;
+3  2  4  7  0  12;
+24  12  36 60 12 96;
+1  0  2  3  0  4]
+
+X=closure(C)
+
+r = bayes_multi_zero_replace(c,"Geometric","modified")

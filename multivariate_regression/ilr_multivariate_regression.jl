@@ -249,6 +249,32 @@ yhat_simplex = invilr(Y_hat,bal)
 
 
 
+#Only temperature as parameter:
+Y_hat_temp = Array{Union{Missing, Float64}}(missing, size(ilr_y))
+
+#populate by seasons:
+x =hcat(ones(size(wisp,1),1), X_wisp[:,[1]])
+b = stepwise_df[1,:B_hat] #temperature only model
+temp = b' * x' #B_hat is full model
+Y_hat_temp[wisp,:] .= temp'
+
+x =hcat(ones(size(ii,1),1), X_su[:,1]) #initial inexing into summer as one sample does not have all the nutrients!
+b = stepwise_df[16,:B_hat]
+temp = b' * x' #B_hat is full model
+Y_hat_temp[su[ii],:] .= temp'
+
+x =hcat(ones(size(fa,1),1), X_fa[:,1])
+b = stepwise_df[34,:B_hat]
+temp = b' * x' #B_hat is full model
+Y_hat_temp[fa,:] .= temp'
+
+#and back transform to the simplex:
+yhat_simplex = invilr(Y_hat,bal)
+yhat_simplex_temp = invilr(Y_hat_temp,bal)
+## and save!
+
+@save "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output.jld2" stepwise_df yhat_simplex bhat_fall_simplex bhat_summer_simplex bhat_wisp_simplex
+
 ## if need to add to oligo_df_zero_plus dataframe:
 # oligo_df_plus.ilr1 = ilr_y[:,1]
 # oligo_df_plus.ilr2 = ilr_y[:,2]
@@ -259,7 +285,20 @@ yhat_simplex = invilr(Y_hat,bal)
 #oligo_df_plus.yearday = dayofyear.(oligo_df_plus[!,:date])
 #CSV.write("/home/kristen/Documents/V6V8_analysis/scripts/rel_abnd_analysis_scripts/matlab_scripts/olgio_df_plus_with_ilr.csv", oligo_df_plus, delim = ',')
 
+a=DataFrame(yhat_1=yhat_simplex[:,1],
+yhat_2=yhat_simplex[:,2],
+yhat_3=yhat_simplex[:,3],
+yhat_4=yhat_simplex[:,4],
+yhat_5=yhat_simplex[:,5],
+yhat_6=yhat_simplex[:,6],
+yhat_temp1=yhat_simplex_temp[:,1],
+yhat_temp2=yhat_simplex_temp[:,2],
+yhat_temp3=yhat_simplex_temp[:,3],
+yhat_temp4=yhat_simplex_temp[:,4],
+yhat_temp5=yhat_simplex_temp[:,5],
+yhat_temp6=yhat_simplex_temp[:,6])
 
+CSV.write("/home/kristen/Documents/V6V8_analysis/scripts/rel_abnd_analysis_scripts/matlab_scripts/yhat_simplex.csv",a, delim = ',')
 
 
 ## If want to just models individually:
@@ -315,213 +354,18 @@ seas_yhat[ii[seas],:] = Y_hat'
 comp_bhat_wisp=invilr(bhat_wisp,bal) #bhat_wisp = Bhat
 
 
+## correlations with phosphate:
 
+using Statistics
+using StatsBase
 
+jj=findall(ismissing.(oligo_df_plus[!,:PO4]))
+ #no nutrient values for one of the samples, exclude
+ii=setdiff(collect(1:size(oligo_df_plus,1)),jj)
 
+cor(oligo_df_plus[ii,:PO4],ilr_y[ii,5])
+corspearman(convert(Array{Float64},oligo_df_plus[ii,:PO4]),ilr_y[ii,5])
+corspearman(convert(Array{Float64},oligo_df_plus[ii,:PO4]),ilr_y[ii,4])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## let's get some plots up in here, up in here:
-Gadfly.set_default_plot_size(45cm,40cm)
-
-Y_hat_r = B_hat_r' * Xr'
-Y_hat_r=Y_hat_r'
-
-var=:temp
-varlabel="Temperature"
-##
-layer1 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,1], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer1_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat_r[:,1], Geom.point, style(default_color=colorant"black"))
-
-layer2 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,2], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer2_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat_r[:,2], Geom.point, style(default_color=colorant"black"))
-
-layer3 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,3], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer3_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat_r[:,3], Geom.point, style(default_color=colorant"black"))
-
-layer4 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,4], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer4_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat_r[:,4], Geom.point, style(default_color=colorant"black"))
-
-layer5 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,5], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer5_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat_r[:,5], Geom.point, style(default_color=colorant"black"))
-
-p1=plot(layer1,layer1_fit, Guide.ylabel(lb[1]), Guide.xlabel(varlabel))
-p2=plot(layer2, layer2_fit,Guide.ylabel(lb[2]), Guide.xlabel(varlabel))
-p3=plot(layer3,layer3_fit,Guide.ylabel(lb[3]), Guide.xlabel(varlabel))
-p4=plot(layer4,layer4_fit,Guide.ylabel(lb[4]), Guide.xlabel(varlabel))
-p5=plot(layer5,layer5_fit,Guide.ylabel(lb[5]), Guide.xlabel(varlabel))
-
-gridstack(Union{Plot,Compose.Context}[p1 p2; p3 p4; p5 Compose.context()])
-
-
-## add the new and improved season aspect:
-Y_hat = B_hat' * X'
-Y_hat= Y_hat'
-
-var=:PO4
-layer1 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,1], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer1_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat[:,1], Geom.point, style(default_color=colorant"black"))
-
-layer2 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,2], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer2_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat[:,1], Geom.point, style(default_color=colorant"black"))
-
-layer3 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,3], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer3_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat[:,3], Geom.point, style(default_color=colorant"black"))
-
-layer4 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,4], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer4_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat[:,4], Geom.point, style(default_color=colorant"black"))
-
-layer5 = layer(x=oligo_df_plus[ii,var], y=ilr_y[ii,5], color = dayofyear.(oligo_df_plus[ii,:date]), style(point_size=1mm))
-layer5_fit=layer(x=oligo_df_plus[ii,var],y=Y_hat[:,5], Geom.point, style(default_color=colorant"black"))
-
-p1=plot(layer1,layer1_fit,Guide.ylabel(lb[1]))
-p2=plot(layer2, layer2_fit,Guide.ylabel(lb[2]))
-p3=plot(layer3,layer3_fit,Guide.ylabel(lb[3]))
-p4=plot(layer4,layer4_fit,Guide.ylabel(lb[4]))
-p5=plot(layer5,layer5_fit,Guide.ylabel(lb[5]))
-
-gridstack(Union{Plot,Compose.Context}[p1 p2; p3 p4; p5 Compose.context()])
-
-
-
-
-
-
-
-
-
-##
-Y_hat = B_hat' * X' #B_hat is full model
-seas_yhat[ii[seas],:] = Y_hat'
-
-
-##
-var1=:temp
-var2=:lightweek
-var3=:SiOH
-#p1=plot(layer1,layer1_fit,Guide.ylabel(lb[1]),Scale.color_continuous(minvalue=1,maxvalue=365,colormap=p -> get(ColorSchemes.jet1, p)))
-#layer2_fit=layer(x=oligo_df_plus[ii[seas],var],y=Y_hat_r[:,2], Geom.point, style(default_color=colorant"black"))
-
-# Gadfly.set_default_plot_size(15cm,15cm)
-# plot(x=dayofyear.(oligo_df_plus[!,:date]),y=oligo_df_plus[!,:lightweek],Geom.point)
-
-cmap=Scale.color_continuous(minvalue=1,maxvalue=365,colormap=p -> get(ColorSchemes.jet1, p))
-
-Gadfly.set_default_plot_size(50cm,30cm)
-layer1v1 = layer(x=oligo_df_plus[ii[seas],var1], y=ilr_y[ii[seas],1], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer2v1 = layer(x=oligo_df_plus[ii[seas],var1], y=ilr_y[ii[seas],2], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer3v1 = layer(x=oligo_df_plus[ii[seas],var1], y=ilr_y[ii[seas],3], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer4v1 = layer(x=oligo_df_plus[ii[seas],var1], y=ilr_y[ii[seas],4], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer5v1 = layer(x=oligo_df_plus[ii[seas],var1], y=ilr_y[ii[seas],5], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-
-fit1v1 = layer(x=oligo_df_plus[ii[seas],var1], y=Y_hat[:,1], style(default_color=RGB(0,0,0),point_size=1mm))
-fit2v1 = layer(x=oligo_df_plus[ii[seas],var1], y=Y_hat[:,2], style(default_color=RGB(0,0,0),point_size=1mm))
-fit3v1 = layer(x=oligo_df_plus[ii[seas],var1], y=Y_hat[:,3], style(default_color=RGB(0,0,0),point_size=1mm))
-fit4v1 = layer(x=oligo_df_plus[ii[seas],var1], y=Y_hat[:,4], style(default_color=RGB(0,0,0),point_size=1mm))
-fit5v1 = layer(x=oligo_df_plus[ii[seas],var1], y=Y_hat[:,5], style(default_color=RGB(0,0,0),point_size=1mm))
-
-layer1v2 = layer(x=oligo_df_plus[ii[seas],var2], y=ilr_y[ii[seas],1], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer2v2 = layer(x=oligo_df_plus[ii[seas],var2], y=ilr_y[ii[seas],2], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer3v2 = layer(x=oligo_df_plus[ii[seas],var2], y=ilr_y[ii[seas],3], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer4v2 = layer(x=oligo_df_plus[ii[seas],var2], y=ilr_y[ii[seas],4], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer5v2 = layer(x=oligo_df_plus[ii[seas],var2], y=ilr_y[ii[seas],5], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-
-fit1v2 = layer(x=oligo_df_plus[ii[seas],var2], y=Y_hat[:,1], style(default_color=RGB(0,0,0),point_size=1mm))
-fit2v2 = layer(x=oligo_df_plus[ii[seas],var2], y=Y_hat[:,2], style(default_color=RGB(0,0,0),point_size=1mm))
-fit3v2 = layer(x=oligo_df_plus[ii[seas],var2], y=Y_hat[:,3], style(default_color=RGB(0,0,0),point_size=1mm))
-fit4v2 = layer(x=oligo_df_plus[ii[seas],var2], y=Y_hat[:,4], style(default_color=RGB(0,0,0),point_size=1mm))
-fit5v2 = layer(x=oligo_df_plus[ii[seas],var2], y=Y_hat[:,5], style(default_color=RGB(0,0,0),point_size=1mm))
-
-layer1v3 = layer(x=oligo_df_plus[ii[seas],var3], y=ilr_y[ii[seas],1], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer2v3 = layer(x=oligo_df_plus[ii[seas],var3], y=ilr_y[ii[seas],2], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer3v3 = layer(x=oligo_df_plus[ii[seas],var3], y=ilr_y[ii[seas],3], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer4v3 = layer(x=oligo_df_plus[ii[seas],var3], y=ilr_y[ii[seas],4], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-layer5v3 = layer(x=oligo_df_plus[ii[seas],var3], y=ilr_y[ii[seas],5], color = dayofyear.(oligo_df_plus[ii[seas],:date]), style(point_size=1mm))
-
-fit1v3 = layer(x=oligo_df_plus[ii[seas],var3], y=Y_hat[:,1], style(default_color=RGB(0,0,0),point_size=1mm))
-fit2v3 = layer(x=oligo_df_plus[ii[seas],var3], y=Y_hat[:,2], style(default_color=RGB(0,0,0),point_size=1mm))
-fit3v3 = layer(x=oligo_df_plus[ii[seas],var3], y=Y_hat[:,3], style(default_color=RGB(0,0,0),point_size=1mm))
-fit4v3 = layer(x=oligo_df_plus[ii[seas],var3], y=Y_hat[:,4], style(default_color=RGB(0,0,0),point_size=1mm))
-fit5v3 = layer(x=oligo_df_plus[ii[seas],var3], y=Y_hat[:,5], style(default_color=RGB(0,0,0),point_size=1mm))
-
-p1v1=plot(layer1v1,fit1v1,Guide.ylabel(lb[1]),cmap)
-p2v1=plot(layer2v1,fit2v1,Guide.ylabel(lb[2]),cmap)
-p3v1=plot(layer3v1,fit3v1,Guide.ylabel(lb[3]),cmap)
-p4v1=plot(layer4v1,fit4v1,Guide.ylabel(lb[4]),cmap)
-p5v1=plot(layer5v1,fit5v1,Guide.ylabel(lb[5]),cmap)
-
-p1v2=plot(layer1v2,fit1v2,Guide.ylabel(lb[1]),cmap)
-p2v2=plot(layer2v2,fit2v2,Guide.ylabel(lb[2]),cmap)
-p3v2=plot(layer3v2,fit3v2,Guide.ylabel(lb[3]),cmap)
-p4v2=plot(layer4v2,fit4v2,Guide.ylabel(lb[4]),cmap)
-p5v2=plot(layer5v2,fit5v2,Guide.ylabel(lb[5]),cmap)
-
-p1v3=plot(layer1v3,fit1v3,Guide.ylabel(lb[1]),cmap)
-p2v3=plot(layer2v3,fit2v3,Guide.ylabel(lb[2]),cmap)
-p3v3=plot(layer3v3,fit3v3,Guide.ylabel(lb[3]),cmap)
-p4v3=plot(layer4v3,fit4v3,Guide.ylabel(lb[4]),cmap)
-p5v3=plot(layer5v3,fit5v3,Guide.ylabel(lb[5]),cmap)
-#hstack(p1,p2,p3,p4,p5)
-gridstack([p1v1 p2v1 p3v1 p4v1 p5v1; p1v2 p2v2 p3v2 p4v2 p5v2;p1v3 p2v3 p3v3 p4v3 p5v3])
-#gridstack(Union{Plot,Compose.Context}[p1 p2 p3 p4 p5; pl1 pl2 pl3 pl4 pl5])
-
-## back transform - how best to plot to show the fits?
-
-comp_yhat=invilr(seas_yhat,bal)
-
-
-##### ADDITIONAL EXAMPLE CODE AND DATASET ###########################################
-
-# # #very nice - this code is working for examples in Chapter 10, Rencher book:
-# filename="/home/kristen/Desktop/Rencher_chap10_data.csv"
-# test_df=CSV.read(filename,header=1) |> DataFrame
-# ##
-# X=convert(Array{Float64},test_df[!,[:x1,:x2,:x3]])
-# X=hcat(ones(19,1),X)
-# Y=convert(Array{Float64},test_df[!,[:y1,:y2,:y3]])
-#
-# #estimate the B's....
-# B_hat= inv(X' * X) * (X' * Y) #woo hoo - this matches the example!
-#
-# #now, siginifance testing:
-# # Overall test of significance
-# # Test for variable significance
-#
-# #Overall:
-# # Model -> b coefficients (except b0) are zero:
-# y_bar = mean(Y, dims =1) #y_bar'
-# n = size(Y,1)
-# H_null = Y' * Y .- (n .* (y_bar * y_bar')) #E+H in book parlance
-# H_full = (Y' * Y) .- (B_hat' * X' * Y) #fitted model, E
-#
-# Λ = det(H_full) ./ det(H_null) #compare this value to Λ(3,3,15) (#y's, #x's, n-#x's-1)
-# # #reject if below a critical value from table...0.309 from look-up table -> can reject....
-# #
-# #to test subset - it is full model over reduced:
-# H_full = (Y' * Y) .- (B_hat' * X' * Y)
-# #reduced:
-# Xr=hcat(X,X[:,2].^2,X[:,3].^2,X[:,4].^2,X[:,2].*X[:,3],X[:,2].*X[:,4],X[:,3].*X[:,4])
-# B_hat_r = inv(Xr' * Xr) * (Xr' * Y)
-# H_r = (Y' * Y) .- (B_hat_r' * Xr' * Y)
-#
-# Λr = det(H_r) ./ det(H_null) #overall test of signifance
-# Λ_test = Λf ./ Λr
+plot(x=oligo_df_plus[ii,:PO4],y=ilr_y[ii,4], Geom.point)
+plot(x=oligo_df_plus[ii,:PO4],y=ilr_y[ii,5], Geom.point)

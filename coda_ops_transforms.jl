@@ -12,7 +12,7 @@ LiefiesMatrix{T <: Union{Missing, Real}} = AbstractMatrix{T}
 # function closure(data::Union{Array{Union{Float64,Missing},2},Array{Union{Int64, Missing},2},Vector{Float64},Vector{Int64}}) #Union{Vector{Regex}, NTuple{N, Regex}}
 #::LiefiesMatrix) #Union{Vector{Regex}, NTuple{N, Regex}}
 function closure(data::T) where T
-    cvec = Matrix{Union{Missing, Float64}}(undef, size(data)...)
+    cvec = Array{Union{Missing, Float64}}(undef, size(data)...)
     for i in 1:size(data,1)
       cvec[i,:] = data[i,:] ./ sum(skipmissing(data[i,:])) #work around for sum not accepting skipmissing with dims argument
     end
@@ -48,6 +48,12 @@ end
 
 function perturb(x,y)
     p=closure(x) .* closure(y) #works even if x is mulitple rows!
+    p=closure(p)
+    return p
+end
+
+function perturb_diff(x,y)
+    p=closure(x) .* inverse(y) #works even if x is mulitple rows!
     p=closure(p)
     return p
 end
