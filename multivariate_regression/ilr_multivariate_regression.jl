@@ -194,8 +194,10 @@ end
 end #seaons
 ## Sweet!  Now, backtransform for plotting if needed:
 
+#if needed (see below for saving)
+@load  "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output.jld2"
 
-#Parameter values back to simplex:
+##Parameter values back to simplex:
 
 #sumwinter/spring: temp-lightweek
 rr=findall(stepwise_df[!,:season] .== "winter/spring")
@@ -223,8 +225,7 @@ best_model_fa=rr2[argmin(stepwise_df[rr2,:Lambda])]
 bhat_fall_simplex=invilr(stepwise_df[best_model_fa,:B_hat],bal) #bhat_wisp = Bhat
 
 
-
-# Fitted data back to simplex:
+## Fitted data back to simplex:
 
 Y_hat = Array{Union{Missing, Float64}}(missing, size(ilr_y))
 
@@ -273,7 +274,7 @@ yhat_simplex = invilr(Y_hat,bal)
 yhat_simplex_temp = invilr(Y_hat_temp,bal)
 ## and save!
 
-@save "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output.jld2" stepwise_df yhat_simplex bhat_fall_simplex bhat_summer_simplex bhat_wisp_simplex
+@save "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output2.jld2" stepwise_df y_hat yhat_simplex bhat_fall_simplex bhat_summer_simplex bhat_wisp_simplex
 
 ## if need to add to oligo_df_zero_plus dataframe:
 # oligo_df_plus.ilr1 = ilr_y[:,1]
@@ -296,7 +297,12 @@ yhat_temp2=yhat_simplex_temp[:,2],
 yhat_temp3=yhat_simplex_temp[:,3],
 yhat_temp4=yhat_simplex_temp[:,4],
 yhat_temp5=yhat_simplex_temp[:,5],
-yhat_temp6=yhat_simplex_temp[:,6])
+yhat_temp6=yhat_simplex_temp[:,6],
+yhat_ilr1=Y_hat[:,1],
+yhat_ilr2=Y_hat[:,2],
+yhat_ilr3=Y_hat[:,3],
+yhat_ilr4=Y_hat[:,4],
+yhat_ilr5=Y_hat[:,5])
 
 CSV.write("/home/kristen/Documents/V6V8_analysis/scripts/rel_abnd_analysis_scripts/matlab_scripts/yhat_simplex.csv",a, delim = ',')
 
