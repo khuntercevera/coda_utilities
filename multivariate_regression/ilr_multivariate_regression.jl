@@ -195,7 +195,7 @@ end #seaons
 ## Sweet!  Now, backtransform for plotting if needed:
 
 #if needed (see below for saving)
-@load  "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output.jld2"
+@load  "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output2.jld2"
 
 ##Parameter values back to simplex:
 
@@ -274,7 +274,7 @@ yhat_simplex = invilr(Y_hat,bal)
 yhat_simplex_temp = invilr(Y_hat_temp,bal)
 ## and save!
 
-@save "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output2.jld2" stepwise_df y_hat yhat_simplex bhat_fall_simplex bhat_summer_simplex bhat_wisp_simplex
+@save "/home/kristen/Documents/V6V8_analysis/analysis_products/oligo_ilr_regression_output2.jld2" stepwise_df fa wisp su ii X_wisp X_fa X_su Y_hat yhat_simplex bhat_fall_simplex bhat_summer_simplex bhat_wisp_simplex
 
 ## if need to add to oligo_df_zero_plus dataframe:
 
@@ -409,7 +409,7 @@ plot(x=oligo_df_plus[ii,:PO4],y=ilr_y[ii,5], Geom.point)
 
 #testing for light signficance:
 wispE = length(wisp) - 2 - 1
-suE = length(ii)- 3 -1 #had two significant vars 
+suE = length(ii)- 3 -1 #had two significant vars
 faE = length(fa)- 2 -2
 
 vE=[10:30; 40; 60; 80; 100]

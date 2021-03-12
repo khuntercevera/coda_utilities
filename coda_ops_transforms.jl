@@ -46,6 +46,45 @@ function ait_var(data::T) where T
     return avar
 end
 
+function geo(x)
+    geo_mean = prod(x) .^ (1 ./ length(x))
+    return geo_mean
+end
+
+function ait_inner(x,y)
+    ai=sum( log.(x ./ geo(x)) .* log.(y ./ geo(y))   )
+    return ai
+
+    # ai=0.0        #alternative calculation:
+    # for i=1:length(x)
+    #     ai = ai + sum((log.(x[i] ./ x) .* (log.(y[i] ./ y))))
+    # end
+    # ai = 1/(2*length(x)) * ai
+    #return ai
+end
+
+function ait_norm(x)
+    an=0.0
+    for i=1:length(x)
+        an= an + sum((log.(x[i] ./ x) .^2))
+    end
+    an = sqrt(1/(2*length(x)) * an)
+    return an
+end
+
+function ait_dist(x,y)
+    if length(x) == length(y)
+        ad = 0.0
+        for i=1:length(x)
+            ad = ad + sum((log.(x[i] ./ x) .- log.(y[i] ./ y)).^2)
+        end
+        ad = sqrt(1/(2*length(x)) * ad)
+        return ad
+    else
+        println("x and y must be the same length")
+    end
+end
+
 function perturb(x,y)
     p=closure(x) .* closure(y) #works even if x is mulitple rows!
     p=closure(p)
