@@ -34,7 +34,8 @@ end
 
 function ait_var(data::T) where T
     cen = center(data)
-    avar = Matrix{Float64}(undef, size(data,2), size(data,2))
+    avar = zeros(Float64, size(data,2), size(data,2))
+    #avar = Matrix{Float64}(undef, size(data,2), size(data,2))
     #avar = Matrix{Union{Missing, Float64}}(undef, size(data,2), size(data,2))
     for i=1:size(data,2)
         for j=i:size(data,2)
