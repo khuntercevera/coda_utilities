@@ -19,14 +19,14 @@ vyp=ait_var(y) #compute aitchison variation
 # test=exp.(-sqrt.(vyp))
 
 #visualize! but must be with Plots.jl!
-hc = hclust(Symmetric(ait_var(y)), linkage=:single, uplo=:U)
+hc = hclust(Symmetric(ait_var(y)), linkage=:complete, uplo=:U) #:complete
 #-> a few other linkage options, check hclust help
 
 ##
 w=plot(hc,xticks=false,linewidth=2)
-node_labels=["O1-I","O2-CB5","O3-II","O4-III/IV","O5-I","O6-I*"] #oligotypes 1-6
+node_labels=["O1-I","O2-CB5","O3-XV","O4-III/IV","O5-I","O6-I*"] #oligotypes 1-6
 #node_labels[hc.order]
 xticks!(w,([1,2,3,4,5,6],node_labels[hc.order]),fontsize=16) #maps from hc and matching up oligos to clades
 ylabel!(w,"Distance, Aitchision variation")
 ##
-savefig(w, "/home/kristen/Documents/V6V8_analysis/paper_V6V8/V6V8_Syn_CoDa_paper/figures/dendrogram_single.pdf")
+savefig(w, "/home/kristen/Documents/V6V8_analysis/paper_V6V8/V6V8_Syn_CoDa_paper/figures/dendrogram_complete.pdf")

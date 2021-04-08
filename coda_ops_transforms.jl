@@ -73,6 +73,15 @@ function ait_norm(x)
     return an
 end
 
+function square_ait_norm(x)
+    an=0.0
+    for i=1:length(x)
+        an= an + sum((log.(x[i] ./ x) .^2))
+    end
+    an = (1/length(x)) * 1/(2*length(x)) * an
+    return an
+end
+
 function ait_dist(x,y)
     if length(x) == length(y)
         ad = 0.0
