@@ -194,7 +194,11 @@ function bayes_multi_zero_replace(c,method,prior)
     elseif method == "Square-root"
         s = sqrt.(sum(c,dims=2)) #total trials per sample!
     elseif method == "Geometric"
-        s = 1 ./ prod(closure(t),dims=2).^(1/D)
+        #if these are very small numbers, can result in a zero multiplicative product
+        println("accounting for very small values here...")
+        temp = 10 .^ ((1/D) .* sum(log10.(t),dims=2))
+        s = 1 ./ temp    
+        #s = 1 ./ prod(closure(t),dims=2).^(1/D)
     elseif method == "Jeffreys"
         s = D/2 * ones(samples,1)
     elseif method == "Perks"
